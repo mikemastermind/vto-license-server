@@ -8,26 +8,30 @@ app.use(cors());
 
 app.get('/', (req, res) => res.send('VTO License Server is running ✅'));
 
-// Simple in-memory licenses for testing
-const licenses = new Map();
+// Test keys (add more as needed)
+const validTestKeys = new Set([
+  "VTO1-TEST-ABCD-EFGH",
+  "VTO1-TEST-9876-WXYZ",
+  "VTO1-TEST-NEW-1234"
+]);
 
 app.post('/validate', (req, res) => {
-  const { licenseKey, deviceId } = req.body || {};
+  const { licenseKey } = req.body || {};
   
-  if (!licenseKey) return res.json({ valid: false, error: "No key provided" });
+  if (!licenseKey) {
+    return res.json({ valid: false, error: "No key provided" });
+  }
 
   const key = licenseKey.toUpperCase().trim();
 
-  if (key === "VTO1-TEST-ABCD-EFGH") {
-    if (!licenses.has(key)) {
-      licenses.set(key, { expiresAt: new Date(Date.now() + 30*24*60*60*1000), deviceId });
-      return res.json({ valid: true, expiresAt: new Date(Date.now() + 30*24*60*60*1000).toISOString() });
-    } else {
-      return res.json({ valid: false, error: "Key already redeemed" });
-    }
+  if (validTestKeys.has(key) || key.startsWith("VTO1-TEST-")) {
+    res.json({ 
+      valid: true, 
+      expiresAt: new Date(Date.now() + 30*24*60*60*1000).toISOString() 
+    });
+  } else {
+    res.json({ valid: false, error: "Invalid or already used key" });
   }
-
-  res.json({ valid: false, error: "Invalid key" });
 });
 
 const PORT = process.env.PORT || 3000;
